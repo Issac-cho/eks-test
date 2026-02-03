@@ -14,4 +14,4 @@ spec:
   selector:
     role: show-guestbook
     app: nginx-frontend
-  type: ClusterIP
+  type: LoadBalancer
