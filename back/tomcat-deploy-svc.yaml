@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    role: send-content
+    app: tomcat-backend
+  name: tomcat-deploy-svc
+  namespace: back
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    role: send-content
+    app: tomcat-backend
+  type: ClusterIP

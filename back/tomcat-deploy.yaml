@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    role: send-content
+    app: tomcat-backend
+  name: tomcat-deploy
+  namespace: back
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      role: send-content
+      app: tomcat-backend
+  template:
+    metadata:
+      labels:
+        role: send-content
+        app: tomcat-backend
+    spec:
+      imagePullSecrets:
+        - name: ecr-secret
+      containers:
+        - image: 052402487676.dkr.ecr.ap-northeast-2.amazonaws.com/guestbook-tomcat:v1.0
+          name: guestbook-was
+          #env:
+          #- name: JAVA_OPTS
+          #  value: "-Xms256m -Xmx350m"
+          resources:
+            limits:
+              cpu: "400m"
+              memory: "512Mi"
+          startupProbe:
+            httpGet:
+              path: /guestbook/health.html
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /guestbook/health.html
+              port: 8080
+            initialDelaySeconds: 0
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /guestbook
+              port: 8080
+            initialDelaySeconds: 0
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 10
+      #      affinity:
+      #        podAntiAffinity:
+      #          preferredDuringSchedulingIgnoredDuringExecution:
+      #          - weight: 100
+      #            podAffinityTerm:
+      #              labelSelector:
+      #                matchExpressions:
+      #                - key: role
+      #                  operator: In
+      #                  values:
+      #                  - send-content
+      #              topologyKey: "kubernetes.io/hostname"
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "kubernetes.io/hostname"
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              role: send-content

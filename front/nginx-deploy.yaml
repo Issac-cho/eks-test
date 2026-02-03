@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    role: show-guestbook
+    app: nginx-frontend
+  name: nginx-deploy
+  namespace: front
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      role: show-guestbook
+      app: nginx-frontend
+  template:
+    metadata:
+      labels:
+        role: show-guestbook
+        app: nginx-frontend
+    spec:
+      imagePullSecrets:
+        - name: ecr-secret
+      containers:
+        - image: 052402487676.dkr.ecr.ap-northeast-2.amazonaws.com/guestbook-nginx:v1.0
+          name: guestbook-web
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "32Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 80
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 80
+            initialDelaySeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 3
+      #      affinity:
+      #       podAntiAffinity:
+      #        preferredDuringSchedulingIgnoredDuringExecution:
+      #          - weight: 100
+      #            podAffinityTerm:
+      #              labelSelector:
+      #                matchExpressions:
+      #                - key: role
+      #                  operator: In
+      #                  values:
+      #                  - show-guestbook
+      #              topologyKey: "kubernetes.io/hostname"
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "kubernetes.io/hostname"
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              role: show-guestbook
