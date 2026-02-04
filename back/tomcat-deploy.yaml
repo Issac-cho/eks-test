@@ -42,19 +42,19 @@ spec:
               port: 8080
             failureThreshold: 30
             periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /guestbook/health.html
-              port: 8080
-            initialDelaySeconds: 0
-            failureThreshold: 3
-            successThreshold: 1
-            periodSeconds: 10
-            timeoutSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /guestbook
-              port: 8080
+          # livenessProbe:
+          #   httpGet:
+          #     path: /guestbook/health.html
+          #     port: 8080
+          #   initialDelaySeconds: 0
+          #   failureThreshold: 3
+          #   successThreshold: 1
+          #   periodSeconds: 10
+          #   timeoutSeconds: 10
+          # readinessProbe:
+          #   httpGet:
+          #     path: /guestbook
+          #     port: 8080
             initialDelaySeconds: 0
             failureThreshold: 3
             successThreshold: 1
