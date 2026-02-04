@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         - name: ecr-secret
       containers:
-        - image: 052402487676.dkr.ecr.ap-northeast-2.amazonaws.com/guestbook-tomcat:v2.0
+        - image: 052402487676.dkr.ecr.ap-northeast-2.amazonaws.com/guestbook-tomcat:v3.0
           name: guestbook-was
           #env:
           #- name: JAVA_OPTS
