@@ -18,7 +18,7 @@ RUN cp -Rv /tmp/apache-tomcat-${TOMCAT_VERSION}/* $CATALINA_HOME
 RUN rm -rf /tmp/apache-tomcat-${TOMCAT_VERSION}
 RUN rm -rf /tmp/tomcat.tar.gz
 
-COPY ./guestbook/ $CATALINA_HOME/webapps/
+COPY ./guestbook.war $CATALINA_HOME/webapps/guestbook.war
 
 RUN rm -rf $CATALINA_HOME/webapps/docs \
            $CATALINA_HOME/webapps/examples \
