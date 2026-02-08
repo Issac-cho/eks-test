@@ -1,0 +1,22 @@
+FROM alpine:3.20
+  
+# timezone 설정
+ENV TZ=Asia/Seoul
+
+# 필요한 패키지 설치
+RUN apk update && apk add --no-cache \
+    nginx \
+    tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo "$TZ" > /etc/timezone && \
+    rm -rf /var/cache/apk/*
+
+# nginx conf 복사
+COPY ./default.conf /etc/nginx/http.d/default.conf
+
+# 로그 디렉터리 생성
+RUN mkdir -p /run/nginx
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

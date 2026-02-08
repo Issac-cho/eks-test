@@ -1,0 +1,76 @@
+name: build-deploy-THEVOID
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # 2. AWS 자격 증명 세팅
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 3. ECR 로그인
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # 4. Nginx 이미지 빌드 & 푸시
+      - name: Build & Push nginx Docker image
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/guestbook-nginx:$IMAGE_TAG -f ./Dockerfile.nginx .
+          docker push ${{ steps.login-ecr.outputs.registry }}/guestbook-nginx:$IMAGE_TAG
+          echo "NGINX_IMAGE=${{ steps.login-ecr.outputs.registry }}/guestbook-nginx:$IMAGE_TAG" >> $GITHUB_ENV
+
+      # 5. Tomcat 이미지 빌드 & 푸시
+      - name: Build & Push tomcat Docker image
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG -f ./Dockerfile.tomcat .
+          docker push ${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG
+          echo "TOMCAT_IMAGE=${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG" >> $GITHUB_ENV
+
+      # 6. Deployment YAML 업데이트
+      - name: Update nginx Deployment YAML
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          sed -i "s|image: .*|image: 052402487676.dkr.ecr.ap-northeast-2.amazonaws.com/guestbook-nginx:$IMAGE_TAG|" ./deployment-nginx.yaml
+
+      - name: Update tomcat Deployment YAML
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          sed -i "s|image: .*|image: 052402487676.dkr.ecr.ap-northeast-2.amazonaws.com/guestbook-tomcat:$IMAGE_TAG|" ./deployment-tomcat.yaml
+
+      # 7. 변경사항이 있으면 커밋 & 푸시
+      #- name: Commit and push if there are changes
+      #  run: |
+      #    git config --global user.name 'GitHub Actions'
+      #    git config --global user.email 'github-actions@github.com'
+      #    git add ./deployment-nginx.yaml ./deployment-tomcat.yaml
+      #    git diff --quiet && git diff --staged --quiet || (
+      #    git commit -m "Update image tag to ${GITHUB_SHA}"
+      #    git push https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+      #   )
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name 'Issac-cho'
+          git config --global user.email 'cho1004jh@gmail.com'
+          git add ./deployment-nginx.yaml ./deployment-tomcat.yaml
+          git diff --quiet && git diff --staged --quiet || (
+          git commit -m "Update image tag to ${GITHUB_SHA}"
+          git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Issac-cho/eks-test.git HEAD:main
+          )

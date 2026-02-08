@@ -1,0 +1,50 @@
+FROM alpine:latest AS builder
+
+RUN apk update && \
+    apk add --no-cache openjdk17 wget tar binutils tzdata
+
+ENV TOMCAT_VERSION=9.0.71
+ENV CATALINA_HOME=/usr/local/tomcat
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+ENV PATH=$CATALINA_HOME/bin:$PATH
+
+ENV TZ Asia/Seoul
+RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN mkdir $CATALINA_HOME
+RUN wget https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz -O /tmp/tomcat.tar.gz
+RUN cd /tmp && tar xvfz tomcat.tar.gz
+RUN cp -Rv /tmp/apache-tomcat-${TOMCAT_VERSION}/* $CATALINA_HOME
+RUN rm -rf /tmp/apache-tomcat-${TOMCAT_VERSION}
+RUN rm -rf /tmp/tomcat.tar.gz
+
+COPY ./guestbook/ $CATALINA_HOME/webapps/
+
+RUN rm -rf $CATALINA_HOME/webapps/docs \
+           $CATALINA_HOME/webapps/examples \
+           $CATALINA_HOME/webapps/host-manager \
+           $CATALINA_HOME/webapps/manager \
+           $CATALINA_HOME/webapps/ROOT \
+           $CATALINA_HOME/bin/*.bat \
+           $CATALINA_HOME/lib/tomcat-native.tar.gz
+
+RUN $JAVA_HOME/bin/jlink \
+    --add-modules java.base,java.naming,java.sql,java.management,java.rmi,java.security.sasl,java.security.jgss,java.xml,jdk.unsupported,java.desktop,java.instrument \
+    --output /opt/jre-minimal \
+    --strip-debug \
+    --no-header-files \
+    --no-man-pages \
+    --compress=2
+
+FROM alpine:latest
+
+ENV JAVA_HOME=/opt/jre-minimal
+ENV CATALINA_HOME=/usr/local/tomcat
+ENV PATH=$CATALINA_HOME/bin:$JAVA_HOME/bin:$PATH
+
+COPY --from=builder /opt/jre-minimal $JAVA_HOME
+COPY --from=builder $CATALINA_HOME $CATALINA_HOME
+
+EXPOSE 8080
+
+CMD ["catalina.sh", "run"]

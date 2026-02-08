@@ -5,7 +5,7 @@ metadata:
     role: show-guestbook
     app: nginx-frontend
   name: nginx-deploy
-  namespace: front
+  namespace: thevoid
 spec:
   replicas: 3
   revisionHistoryLimit: 10
@@ -70,3 +70,48 @@ spec:
           labelSelector:
             matchLabels:
               role: show-guestbook
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    role: show-guestbook
+    app: nginx-frontend
+  name: nginx-deploy-svc
+  namespace: thevoid
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    role: show-guestbook
+    app: nginx-frontend
+  type: LoadBalancer
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-deploy-hpa
+  namespace: thevoid
+spec:
+  maxReplicas: 6
+  minReplicas: 3
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deploy
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
