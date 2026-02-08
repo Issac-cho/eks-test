@@ -39,7 +39,7 @@ jobs:
       - name: Build & Push tomcat Docker image
         run: |
           IMAGE_TAG=${GITHUB_SHA::7}
-          jar cvf ./back/guestbook/* ./back/guestbook.war
+          jar cvf ./back/guestbook.war -C ./back/guestbook .
           docker build -t ${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG -f ./back/dockerfile ./back/
           docker push ${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG
           echo "TOMCAT_IMAGE=${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG" >> $GITHUB_ENV
