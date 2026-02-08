@@ -31,7 +31,7 @@ jobs:
       - name: Build & Push nginx Docker image
         run: |
           IMAGE_TAG=${GITHUB_SHA::7}
-          docker build -t ${{ steps.login-ecr.outputs.registry }}/guestbook-nginx:$IMAGE_TAG -f ./Dockerfile.nginx .
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/guestbook-nginx:$IMAGE_TAG -f ./front/dockerfile ./front/
           docker push ${{ steps.login-ecr.outputs.registry }}/guestbook-nginx:$IMAGE_TAG
           echo "NGINX_IMAGE=${{ steps.login-ecr.outputs.registry }}/guestbook-nginx:$IMAGE_TAG" >> $GITHUB_ENV
 
@@ -39,7 +39,7 @@ jobs:
       - name: Build & Push tomcat Docker image
         run: |
           IMAGE_TAG=${GITHUB_SHA::7}
-          docker build -t ${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG -f ./Dockerfile.tomcat .
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG -f ./back/dockerfile ./back/
           docker push ${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG
           echo "TOMCAT_IMAGE=${{ steps.login-ecr.outputs.registry }}/guestbook-tomcat:$IMAGE_TAG" >> $GITHUB_ENV
 
